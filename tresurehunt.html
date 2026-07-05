@@ -15,7 +15,7 @@
             margin: 0;
             font-family: 'Malgun Gothic', sans-serif;
             position: relative;
-            overflow: hidden; /* 모바일 스크롤 방지 */
+            overflow: hidden; /* 스크롤바 절대 생성 방지 */
         }
 
         .watermark {
@@ -52,7 +52,7 @@
         .btn:hover { transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
 
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; box-sizing: border-box; }
         .screen.active { display: flex; }
 
         #lobby-title { font-size: 2.5rem; color: #2c3e50; margin-bottom: 30px; font-weight: 800; }
@@ -66,17 +66,19 @@
         .btn-hard { background-color: #e74c3c; }
         .btn-veryhard { background-color: #8e44ad; }
 
-        #status-box { text-align: center; margin-bottom: 15px; padding: 0 10px; }
-        #status { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; }
+        #status-box { text-align: center; margin-bottom: 15px; padding: 0 20px; box-sizing: border-box; width: 100%; }
+        #status { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; word-break: keep-all; }
         #log { font-size: 0.9rem; color: #7f8c8d; min-height: 24px; }
         
+        /* 📱 모바일 화면을 절대 벗어나지 않도록 방어막 구축 */
         .board {
             display: grid;
             border: 4px solid #333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             background-color: #fff;
-            max-width: 92vw; /* 모바일 가로 맞춤 */
-            max-height: 92vw;
+            max-width: 85vw !important;  /* 스마트폰 가로 폭의 85% 제한 */
+            max-height: 85vw !important; /* 가로세로 비율 유지 */
+            box-sizing: content-box;
         }
 
         .cell {
@@ -86,7 +88,8 @@
             cursor: pointer;
             position: relative;
             font-weight: bold;
-            -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         .cell.light { background-color: #e0e0e0; }
         .cell.dark { background-color: #bdc3c7; }
@@ -100,7 +103,7 @@
             content: ''; width: 30%; height: 30%; background-color: rgba(46, 204, 113, 0.6);
             border-radius: 50%; position: absolute; z-index: 2;
         }
-        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.1; width: 100%; }
+        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.1; width: 100%; font-weight: 800; }
         
         .player {
             width: 70%; height: 70%; background-color: #ff4757;
@@ -193,8 +196,9 @@
 
             boardSize = preset.size;
             
-            // 📱 스마트폰 화면 크기에 맞춰 타일 크기를 동적으로 자동 계산
-            const maxBoardWidth = Math.min(window.innerWidth * 0.92, 480); 
+            // 📱 기기 가로세로 폭 중 더 작은 쪽을 기준으로 안전하게 패딩(85%)을 적용합니다.
+            const minScreenDimension = Math.min(window.innerWidth, window.innerHeight);
+            const maxBoardWidth = Math.min(minScreenDimension * 0.85, 450); 
             cellSize = Math.floor(maxBoardWidth / boardSize);
 
             mineProbability = preset.mine;
@@ -313,8 +317,8 @@
             
             mapData = generateOptimizedMap(sRow, sCol);
 
-            // 📱 타일 크기에 맞게 글자 크기 동적 조절 (매우어려움 모드 가독성 확보)
-            let calculatedFontSize = Math.max(cellSize * 0.28, 10);
+            // 📱 숫자가 잘리지 않도록 폰트 크기 비율을 지능적으로 수정
+            let calculatedFontSize = Math.max(cellSize * 0.32, 11);
 
             for (let r = 0; r < boardSize; r++) {
                 cells[r] = [];
