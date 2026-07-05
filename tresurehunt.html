@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>보물찾기 by건치좋아 & 제미나이</title>
     <style>
         body {
@@ -15,18 +15,18 @@
             margin: 0;
             font-family: 'Malgun Gothic', sans-serif;
             position: relative;
+            overflow: hidden; /* 모바일 스크롤 방지 */
         }
 
-        /* 🏷️ 공동 제작 2줄 워터마크 스타일 최적화 */
         .watermark {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            font-size: 0.85rem;
+            top: 15px;
+            right: 15px;
+            font-size: 0.8rem;
             font-weight: bold;
             color: #7f8c8d;
             background-color: rgba(255, 255, 255, 0.9);
-            padding: 8px 14px;
+            padding: 6px 12px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             letter-spacing: 0.5px;
@@ -36,9 +36,7 @@
             text-align: left;
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .watermark-highlight {
-            color: #3498db;
-        }
+        .watermark-highlight { color: #3498db; }
 
         .btn {
             padding: 12px 30px;
@@ -54,28 +52,31 @@
         .btn:hover { transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
 
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; }
         .screen.active { display: flex; }
 
-        #lobby-title { font-size: 3rem; color: #2c3e50; margin-bottom: 30px; font-weight: 800; }
-        .start-btn { background-color: #3498db; font-size: 1.4rem; padding: 15px 45px; }
-        #difficulty-title { font-size: 2.2rem; color: #2c3e50; margin-bottom: 30px; }
-        .diff-container { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        #lobby-title { font-size: 2.5rem; color: #2c3e50; margin-bottom: 30px; font-weight: 800; }
+        .start-btn { background-color: #3498db; font-size: 1.3rem; padding: 12px 40px; }
+        #difficulty-title { font-size: 1.8rem; color: #2c3e50; margin-bottom: 25px; }
+        .diff-container { display: flex; gap: 12px; flex-direction: column; width: 80%; max-width: 300px; }
         
+        .diff-container .btn { width: 100%; padding: 14px; font-size: 1.1rem; }
         .btn-easy { background-color: #2ecc71; }
         .btn-normal { background-color: #f39c12; color: white; } 
         .btn-hard { background-color: #e74c3c; }
         .btn-veryhard { background-color: #8e44ad; }
 
-        #status-box { text-align: center; margin-bottom: 20px; }
-        #status { font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; }
-        #log { font-size: 1rem; color: #7f8c8d; height: 24px; }
+        #status-box { text-align: center; margin-bottom: 15px; padding: 0 10px; }
+        #status { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; }
+        #log { font-size: 0.9rem; color: #7f8c8d; min-height: 24px; }
         
         .board {
             display: grid;
             border: 4px solid #333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             background-color: #fff;
+            max-width: 92vw; /* 모바일 가로 맞춤 */
+            max-height: 92vw;
         }
 
         .cell {
@@ -85,6 +86,7 @@
             cursor: pointer;
             position: relative;
             font-weight: bold;
+            -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
         }
         .cell.light { background-color: #e0e0e0; }
         .cell.dark { background-color: #bdc3c7; }
@@ -98,21 +100,21 @@
             content: ''; width: 30%; height: 30%; background-color: rgba(46, 204, 113, 0.6);
             border-radius: 50%; position: absolute; z-index: 2;
         }
-        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.1; }
+        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.1; width: 100%; }
         
         .player {
             width: 70%; height: 70%; background-color: #ff4757;
             border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 5; position: relative;
         }
 
-        #game-controls { display: none; gap: 15px; margin-top: 20px; }
+        #game-controls { display: none; gap: 15px; margin-top: 20px; width: 90%; justify-content: center; }
+        #game-controls .btn { padding: 10px 20px; font-size: 1rem; }
         .btn-restart { background-color: #34495e; }
         .btn-to-title { background-color: #95a5a6; }
     </style>
 </head>
 <body>
 
-    <!-- 🤝 우리 둘의 합작 인증 마크 명시 -->
     <div class="watermark">
         구상: 건치좋아<br>
         코딩: <span class="watermark-highlight">제미나이</span>
@@ -159,10 +161,10 @@
         const gameControls = document.getElementById('game-controls');
 
         const DIFFICULTY_PRESETS = {
-            easy: { size: 7, cell: 60, mine: 0.15, hint: 0.30, center: 3, name: "쉬움", color: "#2c3e50" },
-            normal: { size: 9, cell: 50, mine: 0.20, hint: 0.25, center: 4, name: "보통", color: "#2c3e50" },
-            hard: { size: 11, cell: 45, mine: 0.25, hint: 0.20, center: 5, name: "어려움", color: "#2c3e50" },
-            veryhard: { size: 15, cell: 35, mine: 0.30, hint: 0.15, center: 7, name: "매우 어려움", color: "#8e44ad" }
+            easy: { size: 7, mine: 0.15, hint: 0.30, center: 3, name: "쉬움", color: "#2c3e50" },
+            normal: { size: 9, mine: 0.20, hint: 0.25, center: 4, name: "보통", color: "#2c3e50" },
+            hard: { size: 11, mine: 0.25, hint: 0.20, center: 5, name: "어려움", color: "#2c3e50" },
+            veryhard: { size: 15, mine: 0.30, hint: 0.15, center: 7, name: "매우 어려움", color: "#8e44ad" }
         };
         
         let currentDifficulty = 'easy';
@@ -190,7 +192,11 @@
             const preset = DIFFICULTY_PRESETS[difficulty];
 
             boardSize = preset.size;
-            cellSize = preset.cell;
+            
+            // 📱 스마트폰 화면 크기에 맞춰 타일 크기를 동적으로 자동 계산
+            const maxBoardWidth = Math.min(window.innerWidth * 0.92, 480); 
+            cellSize = Math.floor(maxBoardWidth / boardSize);
+
             mineProbability = preset.mine;
             hintProbability = preset.hint;
             playerPos = { row: preset.center, col: preset.center };
@@ -225,14 +231,12 @@
         function generateOptimizedMap(sRow, sCol) {
             let tempMap = Array.from({ length: boardSize }, () => Array(boardSize).fill('nothing'));
 
-            // 1. 보물 위치 확정
             do {
                 treasurePos.row = Math.floor(Math.random() * boardSize);
                 treasurePos.col = Math.floor(Math.random() * boardSize);
             } while (Math.abs(treasurePos.row - sRow) <= 1 && Math.abs(treasurePos.col - sCol) <= 1);
             tempMap[treasurePos.row][treasurePos.col] = 'treasure';
 
-            // 2. 시작 지점 3x3 안전지대 후보군 추출
             let safeZoneTiles = [];
             for (let r = -1; r <= 1; r++) {
                 for (let c = -1; c <= 1; c++) {
@@ -249,13 +253,11 @@
                 }
             }
 
-            // 3. 시작 안전지대(3x3) 내에 오직 '1개'의 힌트만 확정 생성
             if (safeZoneTiles.length > 0) {
                 const randomSafeTile = safeZoneTiles[Math.floor(Math.random() * safeZoneTiles.length)];
                 tempMap[randomSafeTile.r][randomSafeTile.c] = 'guaranteed_hint';
             }
 
-            // 4. 보물까지 가는 확정적인 안전 경로 1개 생성
             let currR = sRow;
             let currC = sCol;
             while (currR !== treasurePos.row || currC !== treasurePos.col) {
@@ -271,7 +273,6 @@
                 }
             }
 
-            // 5. 남은 칸에 지뢰 및 일반 힌트 배치
             for (let r = 0; r < boardSize; r++) {
                 for (let c = 0; c < boardSize; c++) {
                     if (tempMap[r][c] === 'nothing') {
@@ -312,13 +313,16 @@
             
             mapData = generateOptimizedMap(sRow, sCol);
 
+            // 📱 타일 크기에 맞게 글자 크기 동적 조절 (매우어려움 모드 가독성 확보)
+            let calculatedFontSize = Math.max(cellSize * 0.28, 10);
+
             for (let r = 0; r < boardSize; r++) {
                 cells[r] = [];
                 for (let c = 0; c < boardSize; c++) {
                     const cell = document.createElement('div');
                     cell.className = `cell ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
                     cell.style.width = cell.style.height = `${cellSize}px`;
-                    cell.style.fontSize = currentDifficulty === 'veryhard' ? '11px' : '14px';
+                    cell.style.fontSize = `${calculatedFontSize}px`;
                     cell.dataset.row = r;
                     cell.dataset.col = c;
 
@@ -411,12 +415,12 @@
                 const mineCount = countSurroundingMines(row, col);
                 
                 statusText.innerText = "💡 레이더 힌트 작동!";
-                updateLogText(`보물 거리: [ ${distance}칸 ] | 주변 지뢰: [ ${mineCount}개 ] (🔥 ${winStreak}연승 중)`);
-                cellText.innerHTML = `${distance}<br><span style="color:#e74c3c; font-size:0.85em;">💣${mineCount}</span>`;
+                updateLogText(`보물 거리: [ ${distance}칸 ] | 주변 지뢰: [ ${mineCount}개 ]`);
+                cellText.innerHTML = `${distance}<br><span style="color:#e74c3c; font-size:0.8em;">💣${mineCount}</span>`;
             } 
             else {
                 statusText.innerText = "안전한 타일입니다.";
-                updateLogText(`아무 일도 일어나지 않았습니다. (🔥 ${winStreak}연승 중)`);
+                updateLogText(`아무 일도 일어나지 않았습니다.`);
                 cellText.innerText = "·";
             }
         }
