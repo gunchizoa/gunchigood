@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>보물찾기 어드벤처 게임 - 초최적화 버전</title>
+    <title>보물찾기 </title>
     <style>
         body {
             display: flex;
@@ -14,6 +14,24 @@
             background-color: #f0f0f0;
             margin: 0;
             font-family: 'Malgun Gothic', sans-serif;
+            position: relative; /* 워터마크 기준점 역할을 위해 추가 */
+        }
+
+        /* ✨ 우측 상단 워터마크 스타일 */
+        .watermark {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #7f8c8d;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            letter-spacing: 0.5px;
+            z-index: 1000; /* 항상 최상단에 보이도록 설정 */
+            pointer-events: none; /* 게임 플레이 방해 금지 */
         }
 
         .btn {
@@ -88,8 +106,10 @@
 </head>
 <body>
 
+    <div class="watermark">by건치조아</div>
+
     <div id="lobby-screen" class="screen active">
-        <h1 id="lobby-title">👑 보물찾기 어드벤처</h1>
+        <h1 id="lobby-title">👑 보물찾기 </h1>
         <button class="btn start-btn" onclick="showDifficultyScreen()">게임 시작</button>
     </div>
 
@@ -192,19 +212,15 @@
             return count;
         }
 
-        // ⚡ [초최적화 맵 생성] 연산 속도 대폭 개선 버전
         function generateOptimizedMap(sRow, sCol) {
-            // 1. 모든 맵을 빈 칸으로 초기화
             let tempMap = Array.from({ length: boardSize }, () => Array(boardSize).fill('nothing'));
 
-            // 2. 보물 위치 확정
             do {
                 treasurePos.row = Math.floor(Math.random() * boardSize);
                 treasurePos.col = Math.floor(Math.random() * boardSize);
             } while (Math.abs(treasurePos.row - sRow) <= 1 && Math.abs(treasurePos.col - sCol) <= 1);
             tempMap[treasurePos.row][treasurePos.col] = 'treasure';
 
-            // 3. 시작 지점 3x3 안전지대 확보
             for (let r = -1; r <= 1; r++) {
                 for (let c = -1; c <= 1; c++) {
                     const nr = sRow + r;
@@ -215,11 +231,9 @@
                 }
             }
 
-            // 4. 🔥 [핵심 최적화] 보물까지 가는 확정적인 안전 경로 1개를 먼저 생성 (루프 제거용)
             let currR = sRow;
             let currC = sCol;
             while (currR !== treasurePos.row || currC !== treasurePos.col) {
-                // 보물 방향으로 랜덤하게 한 칸씩 전진하며 발자국 남기기
                 let moveVertical = Math.random() < 0.5;
                 if (moveVertical && currR !== treasurePos.row) {
                     currR += (treasurePos.row > currR) ? 1 : -1;
@@ -228,11 +242,10 @@
                 }
                 
                 if (tempMap[currR][currC] === 'nothing') {
-                    tempMap[currR][currC] = 'path'; // 안전 경로 표기
+                    tempMap[currR][currC] = 'path';
                 }
             }
 
-            // 5. 남은 빈칸에만 확률적으로 지뢰 및 힌트 배치
             for (let r = 0; r < boardSize; r++) {
                 for (let c = 0; c < boardSize; c++) {
                     if (tempMap[r][c] === 'nothing') {
@@ -243,7 +256,6 @@
                             tempMap[r][c] = 'hint';
                         }
                     } else if (tempMap[r][c] === 'path') {
-                        // 안전 경로 표기용 'path'는 플레이 중에는 일반 'nothing'이나 'hint'로 취급
                         tempMap[r][c] = Math.random() < hintProbability ? 'hint' : 'nothing';
                     }
                 }
@@ -268,7 +280,6 @@
 
             const { row: sRow, col: sCol } = playerPos;
             
-            // 지연 연산 없이 즉시 단 1번만에 맵 생성 완료!
             mapData = generateOptimizedMap(sRow, sCol);
 
             for (let r = 0; r < boardSize; r++) {
