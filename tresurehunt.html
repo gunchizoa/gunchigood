@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>보물찾기 by건치좋아 & 제미나이</title>
+    <title>보물찾기: 탐험가 버전 by 건치좋아 & 제미나이</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            width: 100vw;
             background-color: #f0f0f0;
-            margin: 0;
             font-family: 'Malgun Gothic', sans-serif;
             position: relative;
-            overflow: hidden; /* 스크롤바 절대 생성 방지 */
+            overflow: hidden;
         }
 
         .watermark {
@@ -52,33 +58,55 @@
         .btn:hover { transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
 
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; box-sizing: border-box; }
-        .screen.active { display: flex; }
+        /* 🔧 화면 전환(display)이 확실하게 먹히도록 기본 screen 클래스 수정 */
+        .screen { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+        /* active 클래스가 붙으면 강제로 유연한 수직 정렬(flex)이 되도록 변경 */
+        .screen.active { 
+            display: flex !important; 
+        }
 
         #lobby-title { font-size: 2.5rem; color: #2c3e50; margin-bottom: 30px; font-weight: 800; }
         .start-btn { background-color: #3498db; font-size: 1.3rem; padding: 12px 40px; }
-        #difficulty-title { font-size: 1.8rem; color: #2c3e50; margin-bottom: 25px; }
-        .diff-container { display: flex; gap: 12px; flex-direction: column; width: 80%; max-width: 300px; }
         
-        .diff-container .btn { width: 100%; padding: 14px; font-size: 1.1rem; }
+        #difficulty-title { font-size: 1.8rem; color: #2c3e50; margin-bottom: 25px; }
+        
+        /* 🔧 PC와 모바일 모두에서 버튼 배열이 깨지지 않고 널찍하게 잡히도록 뷰포트 개선 */
+        .diff-container { 
+            display: flex; 
+            gap: 15px; 
+            flex-direction: column; 
+            width: 100%; 
+            max-width: 320px; 
+            margin: 0 auto;
+        }
+        
+        .diff-container .btn { width: 100%; padding: 16px; font-size: 1.15rem; }
         .btn-easy { background-color: #2ecc71; }
         .btn-normal { background-color: #f39c12; color: white; } 
         .btn-hard { background-color: #e74c3c; }
         .btn-veryhard { background-color: #8e44ad; }
 
-        #status-box { text-align: center; margin-bottom: 15px; padding: 0 20px; box-sizing: border-box; width: 100%; }
-        #status { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; word-break: keep-all; }
-        #log { font-size: 0.9rem; color: #7f8c8d; min-height: 24px; }
+        #status-box { text-align: center; margin-bottom: 15px; width: 100%; max-width: 100%; padding: 0 10px; }
+        #status { font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; color: #2c3e50; word-break: keep-all; }
+        #log { font-size: 1rem; color: #7f8c8d; min-height: 24px; }
         
-        /* 📱 모바일 화면을 절대 벗어나지 않도록 방어막 구축 */
         .board {
             display: grid;
             border: 4px solid #333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             background-color: #fff;
-            max-width: 85vw !important;  /* 스마트폰 가로 폭의 85% 제한 */
-            max-height: 85vw !important; /* 가로세로 비율 유지 */
-            box-sizing: content-box;
+            max-width: 88vw !important;  
+            max-height: 88vw !important;
+            margin: 0 auto;
         }
 
         .cell {
@@ -88,29 +116,33 @@
             cursor: pointer;
             position: relative;
             font-weight: bold;
-            box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         .cell.light { background-color: #e0e0e0; }
         .cell.dark { background-color: #bdc3c7; }
         
         .cell.revealed { background-color: #ffffff !important; border: 1px solid #ddd; }
         .cell.revealed.dark-revealed { background-color: #f5f5f5 !important; }
-        .cell.gameover-reveal { background-color: #fff6f6 !important; border: 1px solid #eccaca; }
-        .cell.selected { outline: 3px solid #3498db; outline-offset: -3px; z-index: 10; }
         
+        .cell.gameover-reveal.light { background-color: rgba(231, 76, 60, 0.12) !important; border: 1px solid rgba(231, 76, 60, 0.2); }
+        .cell.gameover-reveal.dark { background-color: rgba(231, 76, 60, 0.22) !important; border: 1px solid rgba(231, 76, 60, 0.2); }
+        
+        .cell.selected { outline: 3px solid #3498db; outline-offset: -3px; z-index: 10; }
+        .cell.revealed.hint-revealed { background-color: #e8f4fd !important; }
+
         .cell.movable::after {
-            content: ''; width: 30%; height: 30%; background-color: rgba(46, 204, 113, 0.6);
+            content: ''; width: 32%; height: 32%; background-color: rgba(46, 204, 113, 0.6);
             border-radius: 50%; position: absolute; z-index: 2;
         }
-        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.1; width: 100%; font-weight: 800; }
+        .cell-text { position: absolute; z-index: 1; pointer-events: none; text-align: center; line-height: 1.2; width: 100%; font-weight: 800; }
         
         .player {
             width: 70%; height: 70%; background-color: #ff4757;
             border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 5; position: relative;
         }
 
-        #game-controls { display: none; gap: 15px; margin-top: 20px; width: 90%; justify-content: center; }
+        #game-controls { display: none; gap: 15px; margin-top: 20px; width: 100%; justify-content: center; }
         #game-controls .btn { padding: 10px 20px; font-size: 1rem; }
         .btn-restart { background-color: #34495e; }
         .btn-to-title { background-color: #95a5a6; }
@@ -164,8 +196,8 @@
         const gameControls = document.getElementById('game-controls');
 
         const DIFFICULTY_PRESETS = {
-            easy: { size: 7, mine: 0.15, hint: 0.30, center: 3, name: "쉬움", color: "#2c3e50" },
-            normal: { size: 9, mine: 0.20, hint: 0.25, center: 4, name: "보통", color: "#2c3e50" },
+            easy: { size: 7, mine: 0.15, hint: 0.25, center: 3, name: "쉬움", color: "#2c3e50" },
+            normal: { size: 9, mine: 0.20, hint: 0.22, center: 4, name: "보통", color: "#2c3e50" },
             hard: { size: 11, mine: 0.25, hint: 0.20, center: 5, name: "어려움", color: "#2c3e50" },
             veryhard: { size: 15, mine: 0.30, hint: 0.15, center: 7, name: "매우 어려움", color: "#8e44ad" }
         };
@@ -181,8 +213,11 @@
         let mapData = [];
         let winStreak = 0;
 
+        // 🔧 화면 전환 시 확실하게 class 제어가 들어가도록 보정
         function changeScreen(targetScreen) {
-            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            Object.values(screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
             targetScreen.classList.add('active');
         }
 
@@ -196,9 +231,7 @@
 
             boardSize = preset.size;
             
-            // 📱 기기 가로세로 폭 중 더 작은 쪽을 기준으로 안전하게 패딩(85%)을 적용합니다.
-            const minScreenDimension = Math.min(window.innerWidth, window.innerHeight);
-            const maxBoardWidth = Math.min(minScreenDimension * 0.85, 450); 
+            const maxBoardWidth = Math.min(window.innerWidth * 0.88, window.innerHeight * 0.65, 650); 
             cellSize = Math.floor(maxBoardWidth / boardSize);
 
             mineProbability = preset.mine;
@@ -271,7 +304,6 @@
                 } else if (currC !== treasurePos.col) {
                     currC += (treasurePos.col > currC) ? 1 : -1;
                 }
-                
                 if (tempMap[currR][currC] === 'nothing') {
                     tempMap[currR][currC] = 'path';
                 }
@@ -314,11 +346,9 @@
             board.style.gridTemplateRows = `repeat(${boardSize}, ${cellSize}px)`;
 
             const { row: sRow, col: sCol } = playerPos;
-            
             mapData = generateOptimizedMap(sRow, sCol);
 
-            // 📱 숫자가 잘리지 않도록 폰트 크기 비율을 지능적으로 수정
-            let calculatedFontSize = Math.max(cellSize * 0.32, 11);
+            let calculatedFontSize = Math.max(cellSize * 0.32, 13);
 
             for (let r = 0; r < boardSize; r++) {
                 cells[r] = [];
@@ -340,6 +370,9 @@
                         player.id = 'player';
                         cell.appendChild(player);
                         cell.classList.add('revealed');
+                        
+                        const mineCount = countSurroundingMines(r, c);
+                        textSpan.innerHTML = `<span style="color:#e74c3c;">💣${mineCount}</span>`;
                     }
 
                     cell.addEventListener('click', onCellClick);
@@ -377,6 +410,7 @@
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
                 const playerElement = document.getElementById('player');
                 clickedCell.appendChild(playerElement);
+                
                 clickedCell.classList.add('revealed');
                 if (clickedCell.classList.contains('dark')) clickedCell.classList.add('dark-revealed');
 
@@ -418,20 +452,23 @@
                 const distance = Math.abs(row - treasurePos.row) + Math.abs(col - treasurePos.col);
                 const mineCount = countSurroundingMines(row, col);
                 
-                statusText.innerText = "💡 레이더 힌트 작동!";
+                currentCell.classList.add('hint-revealed');
+                statusText.innerText = "💡 숨겨진 레이더 힌트 발견!";
                 updateLogText(`보물 거리: [ ${distance}칸 ] | 주변 지뢰: [ ${mineCount}개 ]`);
-                cellText.innerHTML = `${distance}<br><span style="color:#e74c3c; font-size:0.8em;">💣${mineCount}</span>`;
+                
+                cellText.innerHTML = `<span style="color:#2980b9;">🧭${distance}</span><br><span style="color:#e74c3c; font-size:0.85em;">💣${mineCount}</span>`;
             } 
             else {
-                statusText.innerText = "안전한 타일입니다.";
-                updateLogText(`아무 일도 일어나지 않았습니다.`);
-                cellText.innerText = "·";
+                const mineCount = countSurroundingMines(row, col);
+                
+                statusText.innerText = "안전한 일반 타일입니다.";
+                updateLogText(`주변에 매설된 지뢰: [ ${mineCount}개 ]`);
+                
+                cellText.innerHTML = `<span style="color:#e74c3c;">💣${mineCount}</span>`;
             }
         }
 
         function revealAllMap() {
-            const MARKERS = { treasure: "👑", mine: "💣", hint: "💡", nothing: "·" };
-
             for (let r = 0; r < boardSize; r++) {
                 for (let c = 0; c < boardSize; c++) {
                     const cell = cells[r][c];
@@ -440,11 +477,16 @@
 
                     if (!isRevealed) {
                         cell.classList.add('gameover-reveal');
-                        if (type === 'hint') {
-                            const dist = Math.abs(r - treasurePos.row) + Math.abs(c - treasurePos.col);
-                            cell.querySelector('.cell-text').innerText = `💡${dist}`;
+                        const cellText = cell.querySelector('.cell-text');
+                        
+                        if (type === 'mine') {
+                            cellText.innerText = "💣"; 
+                        } else if (type === 'treasure') {
+                            cellText.innerText = "👑"; 
+                        } else if (type === 'hint') {
+                            cellText.innerText = "🧭"; 
                         } else {
-                            cell.querySelector('.cell-text').innerText = MARKERS[type] || "·";
+                            cellText.innerText = "";  
                         }
                     }
                 }
